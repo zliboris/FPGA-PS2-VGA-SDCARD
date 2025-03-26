@@ -9,7 +9,10 @@ clock_divider cd(.i_clk(clk),.o_clk(clk_out),.i_mode(mode));
 always #5 clk = ~clk;
 
 initial begin
-#10000 $finish;
+#100
+mode = 1'b1;
+#1000
+$finish;
 end
 
 endmodule
