@@ -2,7 +2,7 @@
 # cd tooling
 # ./xpack/bin/make
 
-SIMUL_TOP_LEVEL_MODULE = tb_clk_div
+SIMUL_TOP_LEVEL_MODULE = tb_sd_card_read
 SIMUL_LIB = work
 # 1 (yes) -> override timescale
 # 0 (no)  -> do NOT override timescale
