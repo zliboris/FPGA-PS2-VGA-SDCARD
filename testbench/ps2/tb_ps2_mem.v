@@ -13,13 +13,13 @@ ps2_mem kb_mem(.i_ps2_clk(r_ps2_clk),.i_ps2_data(r_ps2_data_to_send[0]),
   .i_clk(r_clk),.o_out(w_out_data),.i_addr(r_addr),.i_req(r_req),
   .i_wren(r_wren),.done(w_done));
 
-always #2 r_clk = ~r_clk;
+always #5 r_clk = ~r_clk;
 
 always begin
-  #40 r_ps2_clk = ~r_ps2_clk;
+  #107 r_ps2_clk = ~r_ps2_clk;
 end
 
-always @(negedge r_ps2_clk) r_ps2_data_to_send <= {r_ps2_data_to_send[0],r_ps2_data_to_send[63:1]};
+always @(posedge r_ps2_clk) r_ps2_data_to_send <= {r_ps2_data_to_send[0],r_ps2_data_to_send[63:1]};
 
 
 initial begin
@@ -28,7 +28,7 @@ initial begin
   r_req = 1'b1;
   #1
   r_req = 1'b0;
- #10000
+ #1000000
  $finish;
 end
 

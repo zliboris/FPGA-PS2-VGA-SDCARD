@@ -17,11 +17,11 @@ module tb_sd_card_read;
   wire [31:0] w_cmd_arg;
   wire w_confirm_pin;
   wire [7:0] w_response_status;
-  wire [7:0] w_accept_register;
   wire w_read_done;
+  wire w_mem_out;
 
   reg [4128:0] r_podaci = {1'b1,8'b0, 8'hFE,
-    {2048{1'b0}} , {2048{1'b1}},
+    {512{8'h48}},
     16'b0};
   wire w_CMD_OUTPUT;
   wire w_sd_response;
@@ -56,7 +56,7 @@ module tb_sd_card_read;
     .o_response_status(w_response_status)
   );
 
-  mem_for_testing mft(.i_clk(r_clk), .i_data(w_data), .i_addr(w_addr), .i_write(w_wr_nrd));
+  mem_for_testing mft(.i_clk(r_clk), .i_data(w_data), .i_addr(w_addr), .i_write(w_wr_nrd), .o_data(w_mem_out));
 
   always #5 r_clk = ~r_clk;
 

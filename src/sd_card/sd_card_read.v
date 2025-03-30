@@ -21,7 +21,7 @@ module sd_card_read(
 
   //missing regs
   reg [7:0] r_statusreg = 8'b0;
-  reg r_write_statusreg = 8'b0;
+  reg r_read_done = 8'b0;
   reg [7:0] r_data = 8'b0;
   reg [31:0] r_addr = 32'b0;
   reg r_wr_nrd = 1'b0;
@@ -61,7 +61,7 @@ module sd_card_read(
   assign o_send_cmd = r_send_cmd;
   assign o_cmd_arg = r_cmd_arg;
   assign o_cmd_select = r_cmd;
-  assign o_read_done = r_write_statusreg;
+  assign o_read_done = r_read_done;
 
   always @(posedge i_clk) begin
 
@@ -107,7 +107,7 @@ module sd_card_read(
           Cmd_send_response: begin
 
             if (i_confirm_pin) begin
-              r_shifting_one <= 8'h01;
+              r_shifting_one <= 8'h04;
               if (i_response_status == Rsp_no_error) r_cmd_send_sub_state <= Cmd_send_done;
               else begin
                 r_error_code <= i_response_status;
@@ -174,20 +174,20 @@ module sd_card_read(
 
           end
 
-          8'd1, 8'd2, 8'd3, 8'd4, 8'd5, 8'd6, 8'd7, 8'd8: begin 
+          8'd1, 8'd2, 8'd3, 8'd4, 8'd5, 8'd6, 8'd7: begin 
 
             r_wr_nrd <= 1'b0;
             r_read_accept_state <= r_read_accept_state + 8'd1; 
 
           end
 
-          8'd9: begin
+          8'd8: begin
 
             r_data <= i_accept_register;
             r_addr <= r_byte_counter;
             r_wr_nrd <= 1'b1;
 
-            if (r_byte_counter == 32'd512) begin
+            if (r_byte_counter == 32'd511) begin
               r_byte_counter <= 32'd0;
               r_read_accept_state <= 8'd10;
             end
@@ -239,14 +239,14 @@ module sd_card_read(
       Read_done: begin
 
         r_status <= 8'd1; // Kod za zavrseno citanje
-        r_write_statusreg <= 1'b1;
+        r_read_done <= 1'b1;
         r_state <= Read_status_done;
 
       end
 
       Read_status_done: begin
 
-        r_write_statusreg <= 1'b0;
+        r_read_done <= 1'b0;
         r_state <= Read_Idle;
 
       end
