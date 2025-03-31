@@ -26,7 +26,7 @@ module sd_card_controller(
   //Control register
   localparam ctrlreg_no_operation = 8'd0, ctrlreg_read_operation = 8'd1, ctrlreg_write_operation = 8'd2;
 
-  wire [2:0] w_cmd_line_select;
+  wire w_cmd_line_select;
   wire w_write_data_output;
   wire w_CMD_OUTPUT;
 
@@ -34,6 +34,8 @@ module sd_card_controller(
   wire w_send_cmd_Read;
   wire w_send_cmd_Write;
   wire w_send_cmd_Init;
+
+  wire [7:0] w_response_status;
 
   wire [2:0] w_cmd_select;
   wire [2:0] w_cmd_select_Read;
@@ -51,13 +53,13 @@ module sd_card_controller(
   wire [7:0] w_status_Read;
   wire [7:0] w_status_Write;
 
-  wire [7:0] w_addr;
-  wire [7:0] w_addr_Read;
-  wire [7:0] w_addr_Write;
+  wire [31:0] w_addr;
+  wire [31:0] w_addr_Read;
+  wire [31:0] w_addr_Write;
 
-  wire [7:0] w_wr_nrd;
-  wire [7:0] w_wr_nrd_Read;
-  wire [7:0] w_wr_nrd_Write;
+  wire w_wr_nrd;
+  wire w_wr_nrd_Read;
+  wire w_wr_nrd_Write;
 
   wire w_mode;
   wire w_SD_CD_init_module;
@@ -81,10 +83,10 @@ module sd_card_controller(
   assign o_data = w_data_Read;
   assign w_addr = (r_state == Read) ? w_addr_Read :
                   (r_state == Write) ? w_addr_Write :
-                  8'b0;
-  assign w_wr_nrd = (r_state == Read) ? w_wr_nrd_Read :
+                  32'b0;
+  assign o_wr_nrd = (r_state == Read) ? w_wr_nrd_Read :
                     (r_state == Write) ? w_wr_nrd_Write :
-                    8'b0;
+                    1'b0;
 
   reg r_drive_SD_DI = 1'b0;
   reg r_drive_SD_CS = 1'b0;

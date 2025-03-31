@@ -8,6 +8,7 @@ testbench/sd_card/tb_sd_card_read.v
 testbench/sd_card/tb_sd_card_write.v
 testbench/sd_card/tb_sd_card_init.v
 testbench/sd_card/mem_for_testing.v
+testbench/sd_card/tb_sd_card_controller.v
 src/gpu/vga_controller.v
 src/gpu/gpu.v
 src/ps2/debouncer.v
