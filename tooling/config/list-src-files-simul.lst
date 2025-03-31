@@ -6,6 +6,7 @@ testbench/sd_card/tb_clk_div.v
 testbench/sd_card/tb_sd_card_cmd.v
 testbench/sd_card/tb_sd_card_read.v
 testbench/sd_card/tb_sd_card_write.v
+testbench/sd_card/tb_sd_card_init.v
 testbench/sd_card/mem_for_testing.v
 src/gpu/vga_controller.v
 src/gpu/gpu.v
@@ -16,3 +17,5 @@ src/sd_card/clock_divider.v
 src/sd_card/sd_card_cmd.v
 src/sd_card/sd_card_read.v
 src/sd_card/sd_card_write.v
+src/sd_card/sd_card_init.v
+src/sd_card/sd_card_controller.v

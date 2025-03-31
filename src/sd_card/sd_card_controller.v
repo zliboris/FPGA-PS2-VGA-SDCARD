@@ -1,0 +1,223 @@
+module sd_card_controller(
+  input i_clk,
+  input [31:0] i_addr,
+  input [7:0] i_controlreg,
+  input [7:0] i_data,
+  output [7:0] o_statusreg,
+  output o_write_statusreg,
+  output [7:0] o_data,
+  output [31:0] o_addr,
+  output o_wr_nrd,
+  output o_req,
+
+  //sd card io
+  inout io_SD_DAT0_DO,
+  inout io_SD_DAT3_nCS,
+  inout io_SD_CMD_DI,
+  output o_SD_CLK,
+  input i_SD_WP_N
+);
+
+  //States
+  reg [7:0] r_state = 8'd0;
+  reg [7:0] r_sub_states = 8'd0;
+  localparam Init = 8'b0, Idle = 8'h01, Read = 8'h02, Write = 8'h03; 
+
+  //Control register
+  localparam ctrlreg_no_operation = 8'd0, ctrlreg_read_operation = 8'd1, ctrlreg_write_operation = 8'd2;
+
+  wire w_send_cmd;
+  wire w_send_cmd_Read;
+  wire w_send_cmd_Write;
+  wire w_send_cmd_Init;
+
+  wire [2:0] w_cmd_select;
+  wire [2:0] w_cmd_select_Read;
+  wire [2:0] w_cmd_select_Write;
+  wire [2:0] w_cmd_select_Init;
+
+  wire [31:0] w_cmd_arg;
+  wire [31:0] w_cmd_arg_Read;
+  wire [31:0] w_cmd_arg_Write;
+  wire [31:0] w_cmd_arg_Init;
+
+  wire [7:0] w_data_Read;
+  
+  wire [7:0] w_status;
+  wire [7:0] w_status_Read;
+  wire [7:0] w_status_Write;
+
+  wire [7:0] w_addr;
+  wire [7:0] w_addr_Read;
+  wire [7:0] w_addr_Write;
+
+  wire [7:0] w_wr_nrd;
+  wire [7:0] w_wr_nrd_Read;
+  wire [7:0] w_wr_nrd_Write;
+
+  assign o_req = 1'b1;
+  assign w_send_cmd = (r_state == Init) ? w_send_cmd_Init :
+                      (r_state == Read) ? w_send_cmd_Read :
+                      (r_state == Write) ? w_send_cmd_Write :
+                      1'b0;
+  assign w_cmd_select = (r_state == Init) ? w_cmd_select_Init :
+                        (r_state == Read) ? w_cmd_select_Read :
+                        (r_state == Write) ? w_cmd_select_Write :
+                        3'b0;
+  assign w_cmd_arg = (r_state == Init) ? w_cmd_arg_Init :
+                     (r_state == Read) ? w_cmd_arg_Read:
+                     (r_state == Write) ? w_cmd_arg_Write :
+                      32'b0;
+  assign w_status = (r_state == Read) ? w_status_Read :
+                    (r_state == Write) ? w_status_Write :
+                    8'b0;
+  assign o_data = w_data_Read;
+  assign w_addr = (r_state == Read) ? w_addr_Read :
+                    (r_state == Write) ? w_addr_Write :
+                    8'b0;
+  assign w_wr_nrd = (r_state == Read) ? w_wr_nrd_Read :
+                    (r_state == Write) ? w_wr_nrd_Write :
+                    8'b0;
+
+  wire w_mode;
+  wire w_SD_CD_init_module;
+
+  reg [7:0] r_accept_register = 8'd0;
+  reg r_start_read = 1'b0;
+  reg r_start_write = 1'b0;
+
+  clock_divider cd(.i_clk(i_clk),.o_clk(o_SD_CLK),.i_mode(w_mode));
+
+  sd_card_init sci(
+    .i_clk(o_SD_CLK),
+    .o_init_finished(w_mode),
+    .o_sd_cs(w_SD_CD_init_module),
+
+    .o_send_cmd(w_send_cmd_Init),
+    .o_cmd_select(w_cmd_select_Init),
+    .o_cmd_arg(w_cmd_arg_Init),
+    .i_confirm_pin(w_confirm_pin),
+    .i_response_status(w_response_status)
+  );
+
+  sd_card_read scr(
+    .i_clk(o_SD_CLK),
+    .i_addr(i_addr),
+    .i_accept_register(r_accept_register),
+    .o_status(w_status_Read),
+    .o_data(w_data_Read),
+    .o_addr(w_addr_Read),
+    .o_wr_nrd(w_wr_nrd_Read),
+    .i_start_read(r_start_read),
+    .o_read_done(w_read_done),
+
+    .o_send_cmd(w_send_cmd_Read),
+    .o_cmd_select(w_cmd_select_Read),
+    .o_cmd_arg(w_cmd_arg_Read),
+    .i_confirm_pin(w_confirm_pin),
+    .i_response_status(w_response_status)
+  );
+
+  sd_card_write scw(
+    .i_clk(o_SD_CLK),
+    .i_addr(i_addr),
+    .o_status(w_status_Write),
+    .o_addr(w_addr_Write),
+    .o_wr_nrd(w_wr_nrd_Write),
+    .i_data(i_data),
+    .i_accept_register(r_accept_register),
+    .o_cmd_line_select(w_cmd_line_select),
+    .o_write_data_output(w_write_data_output),
+    .i_sd_DO(io_SD_DAT0_DO),
+    .i_start_write(r_start_write),
+    .o_write_done(w_write_done),
+
+    .o_send_cmd(w_send_cmd_Write),
+    .o_cmd_select(w_cmd_select_Write),
+    .o_cmd_arg(w_cmd_arg_Write),
+    .i_confirm_pin(w_confirm_pin),
+    .i_response_status(w_response_status)
+  );
+
+  always @(posedge o_SD_CLK) begin
+
+    r_accept_register <= { r_accept_register[6:0], io_SD_DAT0_DO };
+
+    case (r_state)
+
+      Init: begin
+
+        if (w_mode) r_state <= Idle;
+
+      end
+
+      Idle: begin
+
+        case (i_controlreg)
+
+          ctrlreg_no_operation: r_state <= Idle;
+
+          ctrlreg_read_operation: r_state <= Read;
+
+          ctrlreg_write_operation: r_state <= Write;
+
+        endcase
+
+      end
+
+      Read: begin
+
+
+        case (r_sub_states)
+
+          8'd0: begin
+
+            r_start_read <= 1'b1;
+            r_sub_states <= r_sub_states + 8'd1;
+
+          end
+
+          8'd1: begin
+
+            r_start_read <= 1'b0;
+            if (w_read_done) begin
+              r_sub_states <= 8'd0;
+              r_state <= Idle;
+            end
+
+          end
+
+        endcase
+
+      end
+
+      Write: begin
+
+        case (r_sub_states)
+
+          8'd0: begin
+
+            r_start_write <= 1'b1;
+            r_sub_states <= r_sub_states + 8'd1;
+
+          end
+
+          8'd1: begin
+
+            r_start_write <= 1'b0;
+            if (w_write_done) begin
+              r_sub_states <= 8'd0;
+              r_state <= Idle;
+            end
+
+          end
+
+        endcase
+
+      end
+
+    endcase
+
+  end
+
+endmodule

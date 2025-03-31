@@ -124,7 +124,7 @@ module sd_card_write(
           Cmd_send_response: begin
 
             if (i_confirm_pin) begin
-              r_shifting_one <= 8'h02;
+              r_shifting_one <= 8'h04;
               if (i_response_status == Rsp_no_error) r_cmd_send_sub_state <= Cmd_send_done;
               else begin
                 r_error_code <= i_response_status;
@@ -216,7 +216,6 @@ module sd_card_write(
           8'd5: begin
 
             if (r_shifting_one[6]) begin
-              r_write_data_response_token <= i_accept_register;
               r_shifting_one <= 8'd0;
               r_write_data_output <= 8'd0;
               r_cmd_line_select <= 1'b0;
@@ -227,9 +226,16 @@ module sd_card_write(
 
           8'd6: begin
 
+            r_write_data_response_token <= i_accept_register;
+            r_write_send_data_state <= 8'd7;
+
+          end
+
+          8'd7: begin
+
             case (r_write_data_response_token[3:1])
 
-              010: begin // Data was accepted
+              3'b010: begin // Data was accepted
 
                 r_write_send_data_state <= 8'd0;
                 r_statusreg <= Status_write_complete;
@@ -237,7 +243,7 @@ module sd_card_write(
 
               end
 
-              101: begin // Data was rejected, CRC error (should never happened)
+              3'b101: begin // Data was rejected, CRC error (should never happened)
 
                 r_write_send_data_state <= 8'd0;
                 r_statusreg <= Status_write_error;
@@ -245,7 +251,7 @@ module sd_card_write(
 
               end
 
-              110: begin // Data was rejected, write error
+              3'b110: begin // Data was rejected, write error
 
                 r_write_send_data_state <= 8'd0;
                 r_statusreg <= Status_write_error;

@@ -20,7 +20,7 @@ module tb_sd_card_write;
   wire w_write_data_output;
   wire w_write_done;
 
-  reg [4184:0] r_podaci = {1'b1,8'b0,{516{8'hFF}},8'b00000001,{20{1'b0}},{20{1'b1}}};
+  reg [4184:0] r_podaci = {1'b1,8'b0,{516{8'hFF}},8'b00000101,{20{1'b0}},{20{1'b1}}};
   wire w_CMD_OUTPUT;
   wire w_sd_response;
   assign w_sd_response = r_podaci[4184];
