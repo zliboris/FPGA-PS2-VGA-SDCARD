@@ -26,6 +26,10 @@ module sd_card_controller(
   //Control register
   localparam ctrlreg_no_operation = 8'd0, ctrlreg_read_operation = 8'd1, ctrlreg_write_operation = 8'd2;
 
+  wire [2:0] w_cmd_line_select;
+  wire w_write_data_output;
+  wire w_CMD_OUTPUT;
+
   wire w_send_cmd;
   wire w_send_cmd_Read;
   wire w_send_cmd_Write;
@@ -55,6 +59,9 @@ module sd_card_controller(
   wire [7:0] w_wr_nrd_Read;
   wire [7:0] w_wr_nrd_Write;
 
+  wire w_mode;
+  wire w_SD_CD_init_module;
+
   assign o_req = 1'b1;
   assign w_send_cmd = (r_state == Init) ? w_send_cmd_Init :
                       (r_state == Read) ? w_send_cmd_Read :
@@ -68,23 +75,33 @@ module sd_card_controller(
                      (r_state == Read) ? w_cmd_arg_Read:
                      (r_state == Write) ? w_cmd_arg_Write :
                       32'b0;
-  assign w_status = (r_state == Read) ? w_status_Read :
-                    (r_state == Write) ? w_status_Write :
-                    8'b0;
+  assign o_statusreg = (r_state == Read) ? w_status_Read :
+                       (r_state == Write) ? w_status_Write :
+                       8'b0;
   assign o_data = w_data_Read;
   assign w_addr = (r_state == Read) ? w_addr_Read :
-                    (r_state == Write) ? w_addr_Write :
-                    8'b0;
+                  (r_state == Write) ? w_addr_Write :
+                  8'b0;
   assign w_wr_nrd = (r_state == Read) ? w_wr_nrd_Read :
                     (r_state == Write) ? w_wr_nrd_Write :
                     8'b0;
 
-  wire w_mode;
-  wire w_SD_CD_init_module;
+  reg r_drive_SD_DI = 1'b0;
+  reg r_drive_SD_CS = 1'b0;
+  wire w_SD_DI;
+  wire w_SD_CS;
+
+  assign io_SD_DAT0_DO = 1'bz;
+  assign io_SD_CMD_DI = r_drive_SD_DI ? w_SD_DI : 1'bz;
+  assign io_SD_DAT3_nCS = r_drive_SD_CS ? w_SD_CS : 1'bz;
+
+  assign w_SD_DI = w_cmd_line_select ? w_write_data_output : w_CMD_OUTPUT;
+  assign w_SD_CS = (r_state == Init) ? w_SD_CD_init_module : 1'b0;
 
   reg [7:0] r_accept_register = 8'd0;
   reg r_start_read = 1'b0;
   reg r_start_write = 1'b0;
+  reg [7:0] r_write_statusreg;
 
   clock_divider cd(.i_clk(i_clk),.o_clk(o_SD_CLK),.i_mode(w_mode));
 
@@ -139,6 +156,17 @@ module sd_card_controller(
     .i_response_status(w_response_status)
   );
 
+  sd_card_cmd scc(
+    .i_clk(o_SD_CLK),
+    .i_send_cmd(w_send_cmd),
+    .i_cmd_select(w_cmd_select),
+    .i_cmd_arg(w_cmd_arg),
+    .io_sd_response(io_SD_DAT0_DO),
+    .o_confirm_pin(w_confirm_pin),
+    .o_CMD_OUTPUT(w_CMD_OUTPUT),
+    .o_response_status(w_response_status)
+  );
+
   always @(posedge o_SD_CLK) begin
 
     r_accept_register <= { r_accept_register[6:0], io_SD_DAT0_DO };
@@ -147,7 +175,13 @@ module sd_card_controller(
 
       Init: begin
 
-        if (w_mode) r_state <= Idle;
+        r_drive_SD_CS <= 1'b1;
+        r_drive_SD_DI <= 1'b1;
+        if (w_mode) begin
+          r_drive_SD_CS <= 1'b0;
+          r_drive_SD_DI <= 1'b0;
+          r_state <= Idle;
+        end
 
       end
 
@@ -172,6 +206,8 @@ module sd_card_controller(
 
           8'd0: begin
 
+            r_drive_SD_CS <= 1'b1;
+            r_drive_SD_DI <= 1'b1;
             r_start_read <= 1'b1;
             r_sub_states <= r_sub_states + 8'd1;
 
@@ -181,9 +217,19 @@ module sd_card_controller(
 
             r_start_read <= 1'b0;
             if (w_read_done) begin
-              r_sub_states <= 8'd0;
-              r_state <= Idle;
+              r_write_statusreg <= 1'b1;
+              r_sub_states <= r_sub_states + 8'd1;
             end
+
+          end
+
+          8'd2: begin
+
+            r_drive_SD_CS <= 1'b0;
+            r_drive_SD_DI <= 1'b0;
+            r_write_statusreg <= 1'b0;
+            r_sub_states <= 8'd0;
+            r_state <= Idle;
 
           end
 
@@ -197,6 +243,8 @@ module sd_card_controller(
 
           8'd0: begin
 
+            r_drive_SD_CS <= 1'b1;
+            r_drive_SD_DI <= 1'b1;
             r_start_write <= 1'b1;
             r_sub_states <= r_sub_states + 8'd1;
 
@@ -206,9 +254,19 @@ module sd_card_controller(
 
             r_start_write <= 1'b0;
             if (w_write_done) begin
-              r_sub_states <= 8'd0;
-              r_state <= Idle;
+              r_write_statusreg <= 1'b1;
+              r_sub_states <= r_sub_states + 8'd1;
             end
+
+          end
+
+          8'd2: begin
+
+            r_drive_SD_CS <= 1'b0;
+            r_drive_SD_DI <= 1'b0;
+            r_write_statusreg <= 1'b0;
+            r_sub_states <= 8'd0;
+            r_state <= Idle;
 
           end
 
