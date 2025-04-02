@@ -11,6 +11,8 @@ reg [7:0] r_counter_400KHz = 8'b0;
 reg [7:0] r_counter_12_5MHz = 8'b0;
 reg r_clk_out = 1'b0;
 
+assign o_clk = r_clk_out;
+
 always @(posedge i_clk) begin
 
   case (i_mode)
@@ -37,8 +39,5 @@ always @(posedge i_clk) begin
 
   endcase
 end
-
-
-assign o_clk = r_clk_out;
 
 endmodule

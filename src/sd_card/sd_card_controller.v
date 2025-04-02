@@ -62,6 +62,7 @@ module sd_card_controller(
   wire w_mode;
   wire w_SD_CD_init_module;
 
+
   assign o_req = 1'b1;
   assign w_send_cmd = (r_state == Init) ? w_send_cmd_Init :
                       (r_state == Read) ? w_send_cmd_Read :
@@ -103,6 +104,10 @@ module sd_card_controller(
   reg r_start_write = 1'b0;
   reg r_write_statusreg = 1'b0;
   
+  wire [7:0] w_accept_register = r_accept_register;
+  wire w_start_read = r_start_read;
+  wire w_start_write = r_start_write;
+
   assign o_write_statusreg = r_write_statusreg;
 
   clock_divider cd(.i_clk(i_clk),.o_clk(o_SD_CLK),.i_mode(w_mode));
@@ -122,12 +127,12 @@ module sd_card_controller(
   sd_card_read scr(
     .i_clk(o_SD_CLK),
     .i_addr(i_addr),
-    .i_accept_register(r_accept_register),
+    .i_accept_register(w_accept_register),
     .o_status(w_status_Read),
     .o_data(w_data_Read),
     .o_addr(w_addr_Read),
     .o_wr_nrd(w_wr_nrd_Read),
-    .i_start_read(r_start_read),
+    .i_start_read(w_start_read),
     .o_read_done(w_read_done),
 
     .o_send_cmd(w_send_cmd_Read),
@@ -144,11 +149,11 @@ module sd_card_controller(
     .o_addr(w_addr_Write),
     .o_wr_nrd(w_wr_nrd_Write),
     .i_data(i_data),
-    .i_accept_register(r_accept_register),
+    .i_accept_register(w_accept_register),
     .o_cmd_line_select(w_cmd_line_select),
     .o_write_data_output(w_write_data_output),
     .i_sd_DO(io_SD_DAT0_DO),
-    .i_start_write(r_start_write),
+    .i_start_write(w_start_write),
     .o_write_done(w_write_done),
 
     .o_send_cmd(w_send_cmd_Write),
