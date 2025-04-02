@@ -49,11 +49,9 @@ module sd_card_controller(
 
   wire [7:0] w_data_Read;
   
-  wire [7:0] w_status;
   wire [7:0] w_status_Read;
   wire [7:0] w_status_Write;
 
-  wire [31:0] w_addr;
   wire [31:0] w_addr_Read;
   wire [31:0] w_addr_Write;
 
@@ -81,7 +79,7 @@ module sd_card_controller(
                        (r_state == Write) ? w_status_Write :
                        8'b0;
   assign o_data = w_data_Read;
-  assign w_addr = (r_state == Read) ? w_addr_Read :
+  assign o_addr = (r_state == Read) ? w_addr_Read :
                   (r_state == Write) ? w_addr_Write :
                   32'b0;
   assign o_wr_nrd = (r_state == Read) ? w_wr_nrd_Read :
@@ -103,7 +101,9 @@ module sd_card_controller(
   reg [7:0] r_accept_register = 8'd0;
   reg r_start_read = 1'b0;
   reg r_start_write = 1'b0;
-  reg [7:0] r_write_statusreg;
+  reg r_write_statusreg = 1'b0;
+  
+  assign o_write_statusreg = r_write_statusreg;
 
   clock_divider cd(.i_clk(i_clk),.o_clk(o_SD_CLK),.i_mode(w_mode));
 
@@ -189,15 +189,9 @@ module sd_card_controller(
 
       Idle: begin
 
-        case (i_controlreg)
+        if (i_controlreg == ctrlreg_read_operation) r_state <= Read;
 
-          ctrlreg_no_operation: r_state <= Idle;
-
-          ctrlreg_read_operation: r_state <= Read;
-
-          ctrlreg_write_operation: r_state <= Write;
-
-        endcase
+        else if(i_controlreg == ctrlreg_write_operation) r_state <= Write;
 
       end
 

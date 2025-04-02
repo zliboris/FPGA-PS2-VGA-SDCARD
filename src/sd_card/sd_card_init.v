@@ -117,11 +117,12 @@ module sd_card_init(
 
               Cmd_send_error: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
 
                 case (r_error_code)// Stanja posle gresaka pri slanju komande
 
-                  Rsp_idle_error: r_state <= Ups;
+                  Rsp_idle_error: r_state <= CMD55_send;
 
                   Rsp_erase_reset: r_state <= Ups;
 
@@ -141,6 +142,7 @@ module sd_card_init(
 
               Cmd_send_done: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
                 r_state <= CMD55_send; // Stanje posle poslate komande
 
@@ -156,6 +158,7 @@ module sd_card_init(
 
               Cmd_send_select: begin
 
+                r_sd_cs <= 1'b0;
                 r_cmd <= CMD55; // Biranje komande za slanje
                 r_cmd_arg <= 32'b0; // Biranje argumenta komande
                 r_send_cmd <=  1'b1;
@@ -193,11 +196,12 @@ module sd_card_init(
 
               Cmd_send_error: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
 
                 case (r_error_code)// Stanja posle gresaka pri slanju komande
 
-                  Rsp_idle_error: r_state <= Ups;
+                  Rsp_idle_error: r_state <= CMD41_send;
 
                   Rsp_erase_reset: r_state <= Ups;
 
@@ -217,6 +221,7 @@ module sd_card_init(
 
               Cmd_send_done: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
                 r_state <= CMD41_send; // Stanje posle poslate komande
 
@@ -232,6 +237,7 @@ module sd_card_init(
 
               Cmd_send_select: begin
 
+                r_sd_cs <= 1'b0;
                 r_cmd <= CMD41; // Biranje komande za slanje
                 r_cmd_arg <= 32'b0; // Biranje argumenta komande
                 r_send_cmd <=  1'b1;
@@ -269,6 +275,7 @@ module sd_card_init(
 
               Cmd_send_error: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
 
                 case (r_error_code)// Stanja posle gresaka pri slanju komande
@@ -293,6 +300,7 @@ module sd_card_init(
 
               Cmd_send_done: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
                 r_state <= CMD58_send; // Stanje posle poslate komande
 
@@ -308,6 +316,7 @@ module sd_card_init(
 
               Cmd_send_select: begin
 
+                r_sd_cs <= 1'b0;
                 r_cmd <= CMD58; // Biranje komande za slanje
                 r_cmd_arg <= 32'b0; // Biranje argumenta komande
                 r_send_cmd <=  1'b1;
@@ -345,6 +354,7 @@ module sd_card_init(
 
               Cmd_send_error: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
 
                 case (r_error_code)// Stanja posle gresaka pri slanju komande
@@ -369,6 +379,7 @@ module sd_card_init(
 
               Cmd_send_done: begin
 
+                r_sd_cs <= 1'b1;
                 r_cmd_send_sub_state <= Cmd_send_select;
                 r_state <= Set_clk_max; // Stanje posle poslate komande
 

@@ -5,21 +5,21 @@ module clock_divider(
 );
 
 
-localparam Clk_400KHz = 1'b0, Clk_12_5Mhz = 1'b1;
+localparam Clk_200KHz = 1'b0, Clk_12_5Mhz = 1'b1;
 
 reg [7:0] r_counter_400KHz = 8'b0;
 reg [7:0] r_counter_12_5MHz = 8'b0;
 reg r_clk_out = 1'b0;
 
-always @(i_clk) begin
+always @(posedge i_clk) begin
 
   case (i_mode)
 
-    Clk_400KHz: begin
+    Clk_200KHz: begin
 
       if (r_counter_400KHz == 8'd125) begin
         r_counter_400KHz <= 8'd1;
-        r_clk_out = ~r_clk_out;
+        r_clk_out <= ~r_clk_out;
       end
       else r_counter_400KHz <= r_counter_400KHz + 1'b1;
 
@@ -27,9 +27,9 @@ always @(i_clk) begin
 
     Clk_12_5Mhz: begin
 
-      if (r_counter_12_5MHz == 8'd3) begin
+      if (r_counter_12_5MHz == 8'd1) begin
         r_counter_12_5MHz <= 8'd0;
-        r_clk_out = ~r_clk_out;
+        r_clk_out <= ~r_clk_out;
       end
       else r_counter_12_5MHz <= r_counter_12_5MHz + 1'b1;
 

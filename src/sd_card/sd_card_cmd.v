@@ -16,7 +16,7 @@ module sd_card_cmd(
   reg [7:0] r_R1_response = 8'hFF;
   reg [39:0] r_R3_response = 40'hFFFFFFFFFF;
   reg [7:0] r_response_status = 8'b0;
-  reg r_rsp_type = 1'b0;
+  reg [7:0] r_rsp_type = 8'b0;
   reg [7:0] r_saved_rsp = 8'b0;
   reg r_cmd_sending = 1'b0;
 
@@ -31,7 +31,7 @@ module sd_card_cmd(
 
 
   localparam NO_CMD = 3'h0, CMD0 = 3'h1, CMD16 = 3'h2, CMD17 = 3'h3, CMD24 = 3'h4, CMD55 = 3'h5, CMD58 = 3'h6, CMD41 = 3'h7;
-  localparam rsp_R1 = 1'b0, rsp_R3 = 1'b1;
+  localparam rsp_R1 = 8'd1, rsp_R3 = 8'd2;
   localparam Idle = 8'd0, Select_Cmd = 8'd1, Send_Cmd = 8'd2, Get_Rsp = 8'd3, Good_Rsp = 8'd4, Error = 8'd5;
   localparam No_rsp = 8'd0, No_error = 8'd1, Idle_error = 8'd2, Parameter_error = 8'd3, Address_error = 8'd4, Erase_sequence_error = 8'd5, Crc_error = 8'd6, Illegal_Command = 8'd7, Erase_reset = 8'd8;
 
@@ -43,6 +43,8 @@ module sd_card_cmd(
   always @(posedge i_clk) begin
 
     if (r_confirm_pin) r_confirm_pin <= 1'b0;
+    r_R1_response <= { r_R1_response[6:0], io_sd_response };
+    r_R3_response <= { r_R3_response[38:0], io_sd_response };
 
     case (r_state)
 
@@ -135,28 +137,26 @@ module sd_card_cmd(
 
           rsp_R1: begin // rework rsp
 
-            r_R1_response <= { r_R1_response[6:0], io_sd_response };
             if (!r_R1_response[7]) begin
-              r_R1_response <= 8'hFF;
               if (r_R1_response[6] || r_R1_response[5] || r_R1_response[4] || r_R1_response[3] || r_R1_response[2] || r_R1_response[1] || r_R1_response[0]) begin
                 r_saved_rsp <= r_R1_response;
                 r_state <= Error;
               end
               else r_state <= Good_Rsp;
+              r_R1_response <= 8'hFF;
             end
 
           end
 
           rsp_R3: begin
 
-            r_R3_response <= { r_R3_response[38:0], io_sd_response };
             if (!r_R3_response[39]) begin
-              r_R3_response <= 40'hFFFFFFFFFF;
               if (r_R3_response[38] || r_R3_response[37] || r_R3_response[36] || r_R3_response[35] || r_R3_response[34] || r_R3_response[33] || r_R3_response[32]) begin 
                 r_saved_rsp <= r_R3_response [7:0];
                 r_state <= Error; //moguce da treba da se doda ovde za ogranicenje napona ali nemam pojma isk
               end
               else r_state <= Good_Rsp;
+              r_R3_response <= 40'hFFFFFFFFFF;
             end
 
           end
